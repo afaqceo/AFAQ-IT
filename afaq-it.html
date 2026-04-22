@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>AFAQ IT — Group of Development</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:       #060C18;
+    --surface:  #0C1628;
+    --surface2: #111E35;
+    --border:   #1A2E50;
+    --accent1:  #2563EB;
+    --accent2:  #7C3AED;
+    --accent3:  #06B6D4;
+    --text:     #F0F6FF;
+    --muted:    #475569;
+    --soft:     #94A3B8;
+    --grad:     linear-gradient(135deg, #2563EB, #7C3AED);
+    --gradH:    linear-gradient(135deg, #3B82F6, #8B5CF6);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+  }
+
+  /* ── SPLASH ── */
+  #splash {
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 18px;
+    transition: opacity .5s ease, visibility .5s ease;
+  }
+  #splash.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+  .splash-logo { width: 80px; height: 80px; animation: pulse 1.5s ease infinite; }
+  .splash-name {
+    font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800;
+    background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: 3px;
+  }
+  .splash-sub {
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--muted); font-weight: 600;
+  }
+  .splash-bar {
+    width: 160px; height: 3px; background: var(--surface2); border-radius: 2px;
+    overflow: hidden; margin-top: 10px;
+  }
+  .splash-fill {
+    height: 100%; width: 0%;
+    background: var(--grad); border-radius: 2px;
+    animation: loadbar 2s ease forwards;
+  }
+  @keyframes loadbar { to { width: 100%; } }
+  @keyframes pulse { 0%,100%{ transform:scale(1) } 50%{ transform:scale(1.06) } }
+
+  /* ── LAYOUT ── */
+  #app { display: flex; height: 100vh; width: 100%; }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    width: 260px; flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    transition: transform .3s ease, width .3s ease;
+    position: relative; z-index: 100;
+  }
+  #sidebar.collapsed { width: 72px; }
+
+  .sidebar-header {
+    padding: 22px 16px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+    min-height: 76px;
+  }
+  .logo-wrap { flex-shrink: 0; }
+  .logo-text { overflow: hidden; transition: opacity .3s, width .3s; }
+  #sidebar.collapsed .logo-text { opacity: 0; width: 0; overflow: hidden; }
+  .brand-name {
+    font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800;
+    background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    white-space: nowrap;
+  }
+  .brand-sub {
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); white-space: nowrap; margin-top: 2px;
+  }
+
+  .sidebar-nav {
+    flex: 1; overflow-y: auto; padding: 12px 10px;
+    scrollbar-width: none;
+  }
+  .sidebar-nav::-webkit-scrollbar { display: none; }
+
+  .nav-section-title {
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); padding: 10px 8px 6px; white-space: nowrap;
+    overflow: hidden; transition: opacity .3s;
+  }
+  #sidebar.collapsed .nav-section-title { opacity: 0; height: 0; padding: 0; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 10px; border-radius: 12px;
+    cursor: pointer; margin-bottom: 2px;
+    transition: background .2s, border-color .2s;
+    border: 1px solid transparent;
+    text-decoration: none; color: inherit;
+    white-space: nowrap;
+  }
+  .nav-item:hover { background: var(--surface2); border-color: var(--border); }
+  .nav-item.active {
+    background: linear-gradient(135deg, #2563EB18, #7C3AED18);
+    border-color: #2563EB40;
+  }
+  .nav-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; flex-shrink: 0;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    transition: background .2s;
+  }
+  .nav-item.active .nav-icon { background: var(--grad); border-color: transparent; }
+  .nav-label {
+    font-size: 13px; font-weight: 600; overflow: hidden;
+    transition: opacity .3s, width .3s; color: var(--soft);
+  }
+  .nav-item.active .nav-label { color: var(--text); }
+  #sidebar.collapsed .nav-label { opacity: 0; width: 0; }
+
+  .hot-badge {
+    margin-left: auto; font-size: 7px; font-weight: 800; letter-spacing: .5px;
+    background: linear-gradient(135deg, #F59E0B, #EF4444);
+    color: #fff; border-radius: 5px; padding: 2px 5px;
+    flex-shrink: 0;
+  }
+  #sidebar.collapsed .hot-badge { display: none; }
+
+  .collapse-btn {
+    border-top: 1px solid var(--border);
+    padding: 14px 10px;
+    display: flex; align-items: center; gap: 12px;
+    cursor: pointer; font-size: 13px; font-weight: 600;
+    color: var(--muted);
+    transition: color .2s;
+  }
+  .collapse-btn:hover { color: var(--text); }
+  .collapse-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 16px; background: var(--bg);
+    transition: transform .3s;
+  }
+  #sidebar.collapsed .collapse-icon { transform: rotate(180deg); }
+  .collapse-text { overflow: hidden; transition: opacity .3s; white-space: nowrap; }
+  #sidebar.collapsed .collapse-text { opacity: 0; width: 0; }
+
+  /* ── MAIN ── */
+  #main {
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden; position: relative;
+  }
+
+  /* ── TOP BAR ── */
+  #topbar {
+    height: 64px; flex-shrink: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 24px; gap: 16px; z-index: 50;
+  }
+  .mob-menu-btn {
+    display: none; width: 40px; height: 40px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--bg);
+    align-items: center; justify-content: center;
+    cursor: pointer; font-size: 18px; color: var(--soft);
+    flex-shrink: 0;
+  }
+  .topbar-title {
+    font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800;
+    color: var(--text); flex: 1;
+  }
+  .topbar-back {
+    display: none; align-items: center; gap: 8px;
+    padding: 8px 16px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--bg);
+    cursor: pointer; font-size: 13px; font-weight: 600; color: var(--soft);
+    transition: color .2s, border-color .2s;
+  }
+  .topbar-back:hover { color: var(--text); border-color: var(--accent1); }
+  .topbar-back.visible { display: flex; }
+  .topbar-search {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 0 14px; height: 38px;
+    transition: border-color .2s;
+  }
+  .topbar-search:focus-within { border-color: var(--accent1); }
+  .topbar-search input {
+    background: none; border: none; outline: none;
+    color: var(--text); font-size: 13px; width: 180px;
+  }
+  .topbar-search input::placeholder { color: var(--muted); }
+
+  /* ── CONTENT ── */
+  #content {
+    flex: 1; overflow: hidden; position: relative;
+  }
+
+  /* ── DASHBOARD ── */
+  #dashboard {
+    height: 100%; overflow-y: auto;
+    padding: 28px 28px 40px;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+
+  .hero-banner {
+    background: var(--grad);
+    border-radius: 20px; padding: 32px 28px;
+    position: relative; overflow: hidden; margin-bottom: 32px;
+  }
+  .hero-banner::before {
+    content: '';
+    position: absolute; top: -60px; right: -60px;
+    width: 200px; height: 200px; border-radius: 50%;
+    background: rgba(255,255,255,.08);
+  }
+  .hero-banner::after {
+    content: '';
+    position: absolute; bottom: -40px; left: 40px;
+    width: 140px; height: 140px; border-radius: 50%;
+    background: rgba(255,255,255,.05);
+  }
+  .hero-tag {
+    display: inline-block; background: rgba(255,255,255,.18);
+    border: 1px solid rgba(255,255,255,.25); border-radius: 20px;
+    padding: 4px 12px; font-size: 10px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase; color: #fff;
+    margin-bottom: 12px; backdrop-filter: blur(4px);
+  }
+  .hero-title {
+    font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800;
+    color: #fff; line-height: 1.2; margin-bottom: 8px; position: relative; z-index: 1;
+  }
+  .hero-sub { font-size: 13px; color: rgba(255,255,255,.7); position: relative; z-index: 1; }
+  .hero-btn {
+    display: inline-block; margin-top: 20px;
+    background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3);
+    border-radius: 12px; padding: 12px 24px;
+    font-size: 14px; font-weight: 700; color: #fff; cursor: pointer;
+    backdrop-filter: blur(8px); transition: background .2s;
+    position: relative; z-index: 1;
+  }
+  .hero-btn:hover { background: rgba(255,255,255,.28); }
+
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(4,1fr); gap: 14px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 18px 16px;
+    position: relative; overflow: hidden;
+    animation: fadeUp .4s ease both;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--grad);
+  }
+  .stat-icon { font-size: 24px; margin-bottom: 10px; }
+  .stat-value {
+    font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800;
+    background: var(--gradH); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .stat-label { font-size: 12px; color: var(--text); font-weight: 600; margin-top: 2px; }
+  .stat-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700;
+    color: var(--text);
+  }
+  .section-more {
+    font-size: 12px; color: var(--accent1); font-weight: 600;
+    cursor: pointer; transition: opacity .2s;
+  }
+  .section-more:hover { opacity: .7; }
+
+  .tools-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr));
+    gap: 14px; margin-bottom: 32px;
+  }
+  .tool-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 18px 16px;
+    cursor: pointer; transition: all .25s ease;
+    position: relative; overflow: hidden;
+    animation: fadeUp .4s ease both;
+  }
+  .tool-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent1);
+    box-shadow: 0 8px 32px rgba(37,99,235,.15);
+  }
+  .tool-icon-wrap {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; margin-bottom: 12px;
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .tool-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .tool-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .card-hot {
+    position: absolute; top: 10px; right: 10px;
+    background: linear-gradient(135deg, #F59E0B, #EF4444);
+    border-radius: 6px; padding: 2px 6px;
+    font-size: 7px; font-weight: 800; color: #fff; letter-spacing: .5px;
+  }
+
+  /* ── IFRAME VIEW ── */
+  #iframe-view {
+    display: none; height: 100%; flex-direction: column;
+    background: var(--bg);
+  }
+  #iframe-view.visible { display: flex; }
+
+  .iframe-bar {
+    height: 50px; background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 18px; flex-shrink: 0;
+  }
+  .iframe-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .iframe-url {
+    flex: 1; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 12px;
+    font-size: 11px; color: var(--muted); font-family: monospace;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .iframe-refresh {
+    width: 32px; height: 32px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 14px; color: var(--soft);
+    transition: color .2s, border-color .2s; flex-shrink: 0;
+  }
+  .iframe-refresh:hover { color: var(--text); border-color: var(--accent1); }
+
+  #site-frame {
+    flex: 1; border: none; background: #fff;
+  }
+
+  .iframe-blocked {
+    display: none; flex: 1;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 16px; padding: 40px;
+    text-align: center;
+  }
+  .iframe-blocked.show { display: flex; }
+  .blocked-icon { font-size: 60px; }
+  .blocked-title {
+    font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800;
+    color: var(--text);
+  }
+  .blocked-sub { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .open-btn {
+    margin-top: 8px; padding: 14px 32px; border-radius: 14px;
+    background: var(--grad); color: #fff; font-size: 15px;
+    font-weight: 700; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif;
+    transition: opacity .2s;
+  }
+  .open-btn:hover { opacity: .85; }
+
+  /* ── MOBILE OVERLAY SIDEBAR ── */
+  #mob-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,.7); backdrop-filter: blur(4px);
+  }
+  #mob-sidebar {
+    display: none; position: fixed; top: 0; left: 0; bottom: 0;
+    width: 280px; z-index: 201;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 20px 12px 40px;
+    transform: translateX(-100%); transition: transform .3s ease;
+  }
+  #mob-sidebar.open { transform: translateX(0); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    #sidebar { display: none; }
+    .mob-menu-btn { display: flex; }
+    #mob-overlay { display: block; }
+    #mob-sidebar { display: block; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .topbar-search { display: none; }
+  }
+  @media (max-width: 560px) {
+    #dashboard { padding: 18px 14px 40px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .tools-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .hero-title { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <svg class="splash-logo" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="sg1" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#1E3A5F"/>
+        <stop offset="100%" stop-color="#0C1628"/>
+      </linearGradient>
+      <linearGradient id="sg2" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#2563EB"/>
+        <stop offset="100%" stop-color="#7C3AED"/>
+      </linearGradient>
+    </defs>
+    <circle cx="40" cy="40" r="40" fill="url(#sg1)"/>
+    <polygon points="40,8 52,34 28,34" fill="white" opacity=".92"/>
+    <polygon points="22,14 32,34 12,34" fill="#94A3B8" opacity=".7"/>
+    <polygon points="58,14 68,34 48,34" fill="#94A3B8" opacity=".7"/>
+    <polygon points="40,8 44,18 36,18" fill="white"/>
+    <rect x="8" y="34" width="64" height="28" rx="4" fill="#0C1628"/>
+    <rect x="8" y="56" width="64" height="8" rx="4" fill="url(#sg2)"/>
+  </svg>
+  <div class="splash-name">AFAQ IT</div>
+  <div class="splash-sub">Group of Development</div>
+  <div class="splash-bar"><div class="splash-fill"></div></div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- SIDEBAR (desktop) -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-wrap">
+        <svg width="40" height="40" viewBox="0 0 80 80" fill="none">
+          <defs>
+            <linearGradient id="lg1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#1E3A5F"/><stop offset="100%" stop-color="#0C1628"/>
+            </linearGradient>
+            <linearGradient id="lg2" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#2563EB"/><stop offset="100%" stop-color="#7C3AED"/>
+            </linearGradient>
+          </defs>
+          <circle cx="40" cy="40" r="40" fill="url(#lg1)"/>
+          <polygon points="40,8 52,34 28,34" fill="white" opacity=".92"/>
+          <polygon points="22,14 32,34 12,34" fill="#94A3B8" opacity=".7"/>
+          <polygon points="58,14 68,34 48,34" fill="#94A3B8" opacity=".7"/>
+          <polygon points="40,8 44,18 36,18" fill="white"/>
+          <rect x="8" y="34" width="64" height="28" rx="4" fill="#0C1628"/>
+          <rect x="8" y="56" width="64" height="8" rx="4" fill="url(#lg2)"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <div class="brand-name">AFAQ IT</div>
+        <div class="brand-sub">Group of Development</div>
+      </div>
+    </div>
+
+    <div class="sidebar-nav" id="sidebarNav">
+      <!-- built by JS -->
+    </div>
+
+    <div class="collapse-btn" onclick="toggleSidebar()">
+      <div class="collapse-icon">‹</div>
+      <div class="collapse-text">Collapse</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- TOPBAR -->
+    <div id="topbar">
+      <button class="mob-menu-btn" onclick="openMobSidebar()" id="mobMenuBtn">☰</button>
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      <div class="topbar-search">
+        <span style="color:var(--muted);font-size:14px">🔍</span>
+        <input type="text" placeholder="Search tools…" id="globalSearch" oninput="handleSearch(this.value)"/>
+      </div>
+      <div class="topbar-back" id="topbarBack" onclick="showDashboard()">← Back</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="content">
+
+      <!-- DASHBOARD -->
+      <div id="dashboard">
+
+        <!-- Hero -->
+        <div class="hero-banner">
+          <div class="hero-tag">⚡ AI-Powered Platform</div>
+          <div class="hero-title">Next-Gen AI Dubbing &<br/>Media Tools</div>
+          <div class="hero-sub">20+ languages · 100+ AI voices · Free to use · No sign-up</div>
+          <div class="hero-btn" onclick="loadTool('ai-dubbing','AI Dubbing','https://aidubbing.io/')">
+            🎬 Start Dubbing Now →
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card" style="animation-delay:.05s">
+            <div class="stat-icon">🧰</div>
+            <div class="stat-value">28+</div>
+            <div class="stat-label">AI Tools</div>
+            <div class="stat-sub">All categories</div>
+          </div>
+          <div class="stat-card" style="animation-delay:.1s">
+            <div class="stat-icon">🌐</div>
+            <div class="stat-value">20+</div>
+            <div class="stat-label">Languages</div>
+            <div class="stat-sub">Supported</div>
+          </div>
+          <div class="stat-card" style="animation-delay:.15s">
+            <div class="stat-icon">🎤</div>
+            <div class="stat-value">100+</div>
+            <div class="stat-label">AI Voices</div>
+            <div class="stat-sub">Styles & accents</div>
+          </div>
+          <div class="stat-card" style="animation-delay:.2s">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value">Free</div>
+            <div class="stat-label">No Sign-Up</div>
+            <div class="stat-sub">Start instantly</div>
+          </div>
+        </div>
+
+        <!-- Featured -->
+        <div class="section-header">
+          <div class="section-title">🔥 Featured Tools</div>
+          <div class="section-more" onclick="scrollToSection('videoSection')">View all →</div>
+        </div>
+        <div class="tools-grid" id="featuredGrid"></div>
+
+        <!-- Video Dubbing -->
+        <div class="section-header" id="videoSection">
+          <div class="section-title">🎬 Video Dubbing</div>
+        </div>
+        <div class="tools-grid" id="videoGrid"></div>
+
+        <!-- Audio Tools -->
+        <div class="section-header" id="audioSection">
+          <div class="section-title">🎵 Audio Tools</div>
+        </div>
+        <div class="tools-grid" id="audioGrid"></div>
+
+        <!-- Subtitle Tools -->
+        <div class="section-header" id="subtitleSection">
+          <div class="section-title">💬 Subtitle Tools</div>
+        </div>
+        <div class="tools-grid" id="subtitleGrid"></div>
+
+        <!-- Video Tools -->
+        <div class="section-header" id="videoToolsSection">
+          <div class="section-title">🛠️ Video Tools</div>
+        </div>
+        <div class="tools-grid" id="videoToolsGrid"></div>
+
+        <!-- AI Writing -->
+        <div class="section-header" id="writingSection">
+          <div class="section-title">✍️ AI Writing</div>
+        </div>
+        <div class="tools-grid" id="writingGrid"></div>
+
+      </div>
+
+      <!-- IFRAME VIEW -->
+      <div id="iframe-view">
+        <div class="iframe-bar">
+          <div class="iframe-dot" style="background:#EF4444"></div>
+          <div class="iframe-dot" style="background:#F59E0B"></div>
+          <div class="iframe-dot" style="background:#22C55E"></div>
+          <div class="iframe-url" id="iframeUrlBar">https://aidubbing.io/</div>
+          <div class="iframe-refresh" onclick="reloadFrame()" title="Reload">↻</div>
+        </div>
+        <iframe id="site-frame" src="" allow="microphone; camera" allowfullscreen></iframe>
+        <div class="iframe-blocked" id="iframeBlocked">
+          <div class="blocked-icon">🔒</div>
+          <div class="blocked-title">Opening in Browser</div>
+          <div class="blocked-sub">This tool has been opened in a new tab for the best experience. Click the button below if it didn't open automatically.</div>
+          <button class="open-btn" id="openInTabBtn">Open Tool Now →</button>
+          <div style="margin-top:16px;font-size:12px;color:var(--muted);cursor:pointer" onclick="showDashboard()">← Return to Dashboard</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE OVERLAY -->
+<div id="mob-overlay" style="display:none" onclick="closeMobSidebar()"></div>
+<div id="mob-sidebar">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+    <svg width="36" height="36" viewBox="0 0 80 80" fill="none">
+      <defs>
+        <linearGradient id="mlg1" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#1E3A5F"/><stop offset="100%" stop-color="#0C1628"/>
+        </linearGradient>
+        <linearGradient id="mlg2" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#2563EB"/><stop offset="100%" stop-color="#7C3AED"/>
+        </linearGradient>
+      </defs>
+      <circle cx="40" cy="40" r="40" fill="url(#mlg1)"/>
+      <polygon points="40,8 52,34 28,34" fill="white" opacity=".92"/>
+      <polygon points="22,14 32,34 12,34" fill="#94A3B8" opacity=".7"/>
+      <polygon points="58,14 68,34 48,34" fill="#94A3B8" opacity=".7"/>
+      <rect x="8" y="34" width="64" height="28" rx="4" fill="#0C1628"/>
+      <rect x="8" y="56" width="64" height="8" rx="4" fill="url(#mlg2)"/>
+    </svg>
+    <div>
+      <div style="font-family:Syne,sans-serif;font-size:16px;font-weight:800;background:linear-gradient(135deg,#3B82F6,#8B5CF6);-webkit-background-clip:text;-webkit-text-fill-color:transparent">AFAQ IT</div>
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Group of Development</div>
+    </div>
+  </div>
+  <div id="mobSidebarNav"></div>
+</div>
+
+<script>
+const TOOLS_DATA = {
+  video: {
+    label: "Video Dubbing", icon: "🎬",
+    items: [
+      { id:"ai-dubbing",       name:"AI Dubbing",         icon:"🎬", color:"#2563EB", desc:"Dub videos in 20+ languages",    url:"https://aidubbing.io/",                    hot:true  },
+      { id:"movie-dubbing",    name:"Movie Dubbing",      icon:"🎥", color:"#7C3AED", desc:"Professional movie dubbing",      url:"https://aidubbing.io/movie-dubbing"                },
+      { id:"film-dubbing",     name:"Film Dubbing",       icon:"🎞️", color:"#A855F7", desc:"High-quality film dubbing",       url:"https://aidubbing.io/film-dubbing"                 },
+      { id:"voice-over",       name:"Voice Over",         icon:"🎙️", color:"#EC4899", desc:"Studio-grade voice overs",        url:"https://aidubbing.io/voice-over"                   },
+      { id:"video-loc",        name:"Video Localization", icon:"🌍", color:"#10B981", desc:"Localize video for any market",   url:"https://aidubbing.io/ai-video-localization"        },
+      { id:"anime-dub",        name:"Anime Dub",          icon:"⛩️", color:"#F59E0B", desc:"Anime dubbing specialist",        url:"https://aidubbing.io/anime-dub",           hot:true  },
+    ]
+  },
+  audio: {
+    label: "Audio Tools", icon: "🎵",
+    items: [
+      { id:"audio-translate",  name:"Audio Translate",    icon:"🔁", color:"#F97316", desc:"Translate audio files",           url:"https://aidubbing.io/audio-translate"              },
+      { id:"tts",              name:"Text to Speech",     icon:"🗣️", color:"#22C55E", desc:"100+ natural AI voices",          url:"https://aidubbing.io/text-to-speech",      hot:true  },
+      { id:"female-voice",     name:"Female Voice Gen",   icon:"👩", color:"#EC4899", desc:"Female voice generator",          url:"https://aidubbing.io/female-voice-generator"       },
+      { id:"asmr",             name:"ASMR Voice",         icon:"🎧", color:"#A855F7", desc:"Relaxing AI ASMR audio",          url:"https://aidubbing.io/ai-asmr-voice-generator"      },
+      { id:"audiobook",        name:"AI Audiobook",       icon:"📚", color:"#6366F1", desc:"Convert books to audio",          url:"https://aidubbing.io/ai-audiobook"                 },
+      { id:"podcast",          name:"Podcast Generator",  icon:"📻", color:"#14B8A6", desc:"Auto-generate podcasts",          url:"https://aidubbing.io/podcast-generator"            },
+      { id:"sound-fx",         name:"Sound Effects",      icon:"🎵", color:"#F59E0B", desc:"AI sound effect generation",      url:"https://aidubbing.io/ai-sound-effect-generator"    },
+    ]
+  },
+  subtitle: {
+    label: "Subtitle Tools", icon: "💬",
+    items: [
+      { id:"sub-translator",   name:"Subtitle Translator",icon:"💬", color:"#3B82F6", desc:"Translate subtitle files",        url:"https://aidubbing.io/subtitle-translator"          },
+      { id:"srt-translator",   name:"SRT Translator",     icon:"📄", color:"#8B5CF6", desc:"Translate .SRT files",            url:"https://aidubbing.io/srt-translator"               },
+      { id:"mp4-srt",          name:"MP4 to SRT",         icon:"🎬", color:"#10B981", desc:"Extract subtitles from MP4",      url:"https://aidubbing.io/mp4-to-srt"                   },
+      { id:"vid-srt",          name:"Video to SRT",       icon:"🎞️", color:"#F59E0B", desc:"Video subtitle export",           url:"https://aidubbing.io/video-to-srt"                 },
+      { id:"mp3-srt",          name:"MP3 to SRT",         icon:"🎵", color:"#EC4899", desc:"Audio subtitle file",             url:"https://aidubbing.io/mp3-to-srt"                   },
+    ]
+  },
+  videoTools: {
+    label: "Video Tools", icon: "🛠️",
+    items: [
+      { id:"add-audio",        name:"Add Audio to Video", icon:"🔊", color:"#3B82F6", desc:"Merge audio & video tracks",      url:"https://aidubbing.io/add-audio-to-video"           },
+      { id:"vol-boost",        name:"Volume Booster",     icon:"📢", color:"#06B6D4", desc:"Boost video volume",              url:"https://aidubbing.io/video-volume-booster"         },
+      { id:"vid-text",         name:"Video to Text",      icon:"📝", color:"#8B5CF6", desc:"Transcribe video content",        url:"https://aidubbing.io/video-to-text-converter"      },
+    ]
+  },
+  writing: {
+    label: "AI Writing", icon: "✍️",
+    items: [
+      { id:"tone-rewrite",     name:"AI Tone Rewriter",   icon:"✍️", color:"#6366F1", desc:"Rewrite with perfect tone",       url:"https://aidubbing.io/ai-tone-rewriter",    hot:true  },
+    ]
+  }
+};
+
+// Flatten all tools
+const ALL_TOOLS = Object.values(TOOLS_DATA).flatMap(c => c.items);
+const FEATURED = ALL_TOOLS.filter(t => t.hot);
+
+let currentToolUrl = '';
+let sidebarCollapsed = false;
+
+/* ─── BUILD SIDEBAR ─── */
+function buildSidebar(container, isMobile) {
+  container.innerHTML = '';
+
+  // Home
+  const homeItem = makeNavItem('home','🏠','Dashboard', null, false, isMobile);
+  homeItem.addEventListener('click', () => {
+    showDashboard();
+    setActiveNav('home');
+    if (isMobile) closeMobSidebar();
+  });
+  container.appendChild(homeItem);
+
+  Object.entries(TOOLS_DATA).forEach(([key, cat]) => {
+    const sec = document.createElement('div');
+    sec.className = 'nav-section-title';
+    sec.textContent = cat.label;
+    container.appendChild(sec);
+
+    cat.items.forEach(tool => {
+      const item = makeNavItem(tool.id, tool.icon, tool.name, tool.url, tool.hot, isMobile);
+      item.addEventListener('click', () => {
+        loadTool(tool.id, tool.name, tool.url);
+        setActiveNav(tool.id);
+        if (isMobile) closeMobSidebar();
+      });
+      container.appendChild(item);
+    });
+  });
+}
+
+function makeNavItem(id, icon, label, url, hot, isMobile) {
+  const el = document.createElement('div');
+  el.className = 'nav-item';
+  el.dataset.id = id;
+  el.innerHTML = `
+    <div class="nav-icon">${icon}</div>
+    <div class="nav-label">${label}</div>
+    ${hot ? '<div class="hot-badge">HOT</div>' : ''}
+  `;
+  return el;
+}
+
+function setActiveNav(id) {
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.id === id);
+  });
+}
+
+/* ─── BUILD TOOL GRIDS ─── */
+function buildGrid(containerId, tools, delay = 0) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  tools.forEach((tool, i) => {
+    const card = document.createElement('div');
+    card.className = 'tool-card';
+    card.style.animationDelay = (delay + i * 0.05) + 's';
+    card.innerHTML = `
+      ${tool.hot ? '<div class="card-hot">HOT</div>' : ''}
+      <div class="tool-icon-wrap" style="background:${tool.color}22;border-color:${tool.color}40">${tool.icon}</div>
+      <div class="tool-name">${tool.name}</div>
+      <div class="tool-desc">${tool.desc}</div>
+    `;
+    card.addEventListener('click', () => loadTool(tool.id, tool.name, tool.url));
+    container.appendChild(card);
+  });
+}
+
+/* ─── SEARCH ─── */
+function handleSearch(q) {
+  if (!q.trim()) {
+    showDashboard();
+    return;
+  }
+  const results = ALL_TOOLS.filter(t =>
+    t.name.toLowerCase().includes(q.toLowerCase()) ||
+    t.desc.toLowerCase().includes(q.toLowerCase())
+  );
+  showSearchResults(results, q);
+}
+
+function showSearchResults(results, q) {
+  const dash = document.getElementById('dashboard');
+  dash.style.display = 'block';
+  document.getElementById('iframe-view').classList.remove('visible');
+  document.getElementById('topbarBack').classList.remove('visible');
+  document.getElementById('topbarTitle').textContent = `Search: "${q}"`;
+
+  dash.innerHTML = `
+    <div class="section-header" style="margin-bottom:20px">
+      <div class="section-title">🔍 ${results.length} result(s) for "${q}"</div>
+    </div>
+    <div class="tools-grid" id="searchGrid"></div>
+  `;
+  buildGrid('searchGrid', results);
+}
+
+/* ─── LOAD TOOL IN IFRAME ─── */
+function loadTool(id, name, url) {
+  currentToolUrl = url;
+  document.getElementById('topbarTitle').textContent = name;
+  document.getElementById('topbarBack').classList.add('visible');
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('iframe-view').classList.add('visible');
+  document.getElementById('iframeUrlBar').textContent = url;
+  document.getElementById('iframeBlocked').classList.remove('show');
+  document.getElementById('site-frame').style.display = 'block';
+  document.getElementById('site-frame').src = url;
+  document.getElementById('openInTabBtn').onclick = () => window.open(url, '_blank');
+
+  // Detect if iframe gets blocked (CSP / X-Frame-Options)
+  const frame = document.getElementById('site-frame');
+  frame.onload = function() {
+    try {
+      // Try accessing frame content — will throw if cross-origin blocked
+      const doc = frame.contentDocument || frame.contentWindow.document;
+      if (!doc || doc.URL === 'about:blank') throw new Error('blocked');
+    } catch(e) {
+      // Blocked — show fallback
+      showBlocked(url);
+    }
+  };
+  frame.onerror = () => showBlocked(url);
+
+  // Fallback timer — if iframe doesn't load real content in 4s, show fallback
+  setTimeout(() => {
+    try {
+      const f = document.getElementById('site-frame');
+      const doc = f.contentDocument || f.contentWindow.document;
+      if (!doc || doc.URL === 'about:blank' || doc.body?.innerHTML?.trim() === '') {
+        showBlocked(url);
+      }
+    } catch(e) {
+      showBlocked(url);
+    }
+  }, 4000);
+
+  setActiveNav(id);
+  // Auto-open in new tab as primary since most modern sites block iframes
+  window.open(url, '_blank');
+  setTimeout(() => showBlocked(url), 500);
+}
+
+function showBlocked(url) {
+  document.getElementById('site-frame').style.display = 'none';
+  document.getElementById('iframeBlocked').classList.add('show');
+  document.getElementById('openInTabBtn').onclick = () => window.open(url, '_blank');
+}
+
+function reloadFrame() {
+  const f = document.getElementById('site-frame');
+  if (currentToolUrl) {
+    f.style.display = 'block';
+    document.getElementById('iframeBlocked').classList.remove('show');
+    f.src = currentToolUrl;
+    window.open(currentToolUrl, '_blank');
+    setTimeout(() => showBlocked(currentToolUrl), 600);
+  }
+}
+
+/* ─── SHOW DASHBOARD ─── */
+function showDashboard() {
+  document.getElementById('topbarTitle').textContent = 'Dashboard';
+  document.getElementById('topbarBack').classList.remove('visible');
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('iframe-view').classList.remove('visible');
+  document.getElementById('site-frame').src = '';
+  document.getElementById('globalSearch').value = '';
+  setActiveNav('home');
+
+  // Rebuild dashboard if needed
+  if (!document.getElementById('featuredGrid').childElementCount) {
+    buildAllGrids();
+  }
+}
+
+function buildAllGrids() {
+  buildGrid('featuredGrid',    FEATURED, 0.1);
+  buildGrid('videoGrid',       TOOLS_DATA.video.items, 0.05);
+  buildGrid('audioGrid',       TOOLS_DATA.audio.items, 0.05);
+  buildGrid('subtitleGrid',    TOOLS_DATA.subtitle.items, 0.05);
+  buildGrid('videoToolsGrid',  TOOLS_DATA.videoTools.items, 0.05);
+  buildGrid('writingGrid',     TOOLS_DATA.writing.items, 0.05);
+}
+
+/* ─── SIDEBAR COLLAPSE ─── */
+function toggleSidebar() {
+  sidebarCollapsed = !sidebarCollapsed;
+  document.getElementById('sidebar').classList.toggle('collapsed', sidebarCollapsed);
+}
+
+/* ─── MOBILE SIDEBAR ─── */
+function openMobSidebar() {
+  document.getElementById('mob-overlay').style.display = 'block';
+  document.getElementById('mob-sidebar').classList.add('open');
+  document.getElementById('mobMenuBtn').textContent = '✕';
+}
+function closeMobSidebar() {
+  document.getElementById('mob-overlay').style.display = 'none';
+  document.getElementById('mob-sidebar').classList.remove('open');
+  document.getElementById('mobMenuBtn').textContent = '☰';
+}
+
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
+/* ─── INIT ─── */
+document.addEventListener('DOMContentLoaded', () => {
+  buildSidebar(document.getElementById('sidebarNav'), false);
+  buildSidebar(document.getElementById('mobSidebarNav'), true);
+  buildAllGrids();
+  setActiveNav('home');
+
+  // Hide splash after 2.3s
+  setTimeout(() => {
+    document.getElementById('splash').classList.add('hide');
+  }, 2300);
+});
+</script>
+</body>
+</html>

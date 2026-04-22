@@ -1,0 +1,660 @@
+import { useState, useEffect, useRef } from "react";
+
+const TOOLS = {
+  video: [
+    { id: "ai-dubbing", name: "AI Dubbing", icon: "🎬", desc: "Dub videos in 20+ languages", color: "#4F8EF7", hot: true },
+    { id: "movie-dubbing", name: "Movie Dubbing", icon: "🎥", desc: "Professional movie dubbing", color: "#7B5CF7" },
+    { id: "film-dubbing", name: "Film Dubbing", icon: "🎞️", desc: "High-quality film dubbing", color: "#A855F7" },
+    { id: "voice-over", name: "Voice Over", icon: "🎙️", desc: "Studio-grade voice overs", color: "#EC4899" },
+    { id: "video-localization", name: "Video Localization", icon: "🌍", desc: "Localize for any market", color: "#10B981" },
+    { id: "anime-dub", name: "Anime Dub", icon: "⛩️", desc: "Anime dubbing specialist", color: "#F59E0B", hot: true },
+  ],
+  videoTools: [
+    { id: "add-audio", name: "Add Audio to Video", icon: "🔊", desc: "Merge audio & video", color: "#3B82F6" },
+    { id: "volume-booster", name: "Volume Booster", icon: "📢", desc: "Boost video volume", color: "#06B6D4" },
+    { id: "video-to-text", name: "Video to Text", icon: "📝", desc: "Transcribe video content", color: "#8B5CF6" },
+  ],
+  audio: [
+    { id: "audio-translate", name: "Audio Translate", icon: "🔁", desc: "Translate audio files", color: "#F97316" },
+    { id: "text-to-speech", name: "Text to Speech", icon: "🗣️", desc: "100+ natural AI voices", color: "#22C55E", hot: true },
+    { id: "female-voice", name: "Female Voice", icon: "👩", desc: "Female voice generator", color: "#EC4899" },
+    { id: "asmr-voice", name: "ASMR Voice", icon: "🎧", desc: "Relaxing ASMR audio", color: "#A855F7" },
+    { id: "audiobook", name: "AI Audiobook", icon: "📚", desc: "Convert books to audio", color: "#6366F1" },
+    { id: "podcast", name: "Podcast Generator", icon: "🎙️", desc: "Auto-generate podcasts", color: "#14B8A6" },
+    { id: "sound-effect", name: "Sound Effects", icon: "🎵", desc: "AI sound generation", color: "#F59E0B" },
+  ],
+  subtitle: [
+    { id: "subtitle-translator", name: "Subtitle Translator", icon: "💬", desc: "Translate subtitle files", color: "#3B82F6" },
+    { id: "srt-translator", name: "SRT Translator", icon: "📄", desc: "Translate .SRT files", color: "#8B5CF6" },
+    { id: "mp4-to-srt", name: "MP4 to SRT", icon: "🎬", desc: "Extract subtitles", color: "#10B981" },
+    { id: "video-to-srt", name: "Video to SRT", icon: "🎞️", desc: "Video subtitle export", color: "#F59E0B" },
+    { id: "mp3-to-srt", name: "MP3 to SRT", icon: "🎵", desc: "Audio subtitle file", color: "#EC4899" },
+  ],
+  writing: [
+    { id: "tone-rewriter", name: "AI Tone Rewriter", icon: "✍️", desc: "Rewrite with perfect tone", color: "#6366F1", hot: true },
+  ],
+};
+
+const CATEGORIES = [
+  { key: "video", label: "Video Dubbing", icon: "🎬" },
+  { key: "videoTools", label: "Video Tools", icon: "🛠️" },
+  { key: "audio", label: "Audio Tools", icon: "🎵" },
+  { key: "subtitle", label: "Subtitles", icon: "💬" },
+  { key: "writing", label: "AI Writing", icon: "✍️" },
+];
+
+const STATS = [
+  { label: "Tools Available", value: "28+", icon: "🧰", sub: "All Categories" },
+  { label: "Languages", value: "20+", icon: "🌐", sub: "Supported" },
+  { label: "Voice Styles", value: "100+", icon: "🎤", sub: "AI Voices" },
+  { label: "Users Served", value: "Free", icon: "✅", sub: "No Sign-Up" },
+];
+
+// SVG Mountain Logo derived from the Passu Cones image
+const MountainLogo = () => (
+  <svg width="42" height="42" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#1E3A5F" />
+        <stop offset="100%" stopColor="#2563EB" />
+      </linearGradient>
+      <linearGradient id="peakGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#FFFFFF" />
+        <stop offset="40%" stopColor="#CBD5E1" />
+        <stop offset="100%" stopColor="#64748B" />
+      </linearGradient>
+      <linearGradient id="accentGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stopColor="#3B82F6" />
+        <stop offset="100%" stopColor="#8B5CF6" />
+      </linearGradient>
+    </defs>
+    <circle cx="21" cy="21" r="21" fill="url(#skyGrad)" />
+    {/* Main peak */}
+    <polygon points="21,6 27,22 15,22" fill="url(#peakGrad)" />
+    {/* Left peak */}
+    <polygon points="12,10 17,22 7,22" fill="#94A3B8" opacity="0.8" />
+    {/* Right peak */}
+    <polygon points="30,10 35,22 25,22" fill="#94A3B8" opacity="0.8" />
+    {/* Snow cap */}
+    <polygon points="21,6 23,11 19,11" fill="white" opacity="0.95" />
+    {/* Ground line */}
+    <rect x="4" y="22" width="34" height="12" rx="2" fill="#1E3A5F" />
+    {/* Accent bar */}
+    <rect x="4" y="30" width="34" height="4" rx="2" fill="url(#accentGrad)" />
+  </svg>
+);
+
+const WaveBackground = () => (
+  <svg style={{ position: "absolute", bottom: 0, left: 0, width: "100%", opacity: 0.12, pointerEvents: "none" }}
+    viewBox="0 0 400 120" preserveAspectRatio="none">
+    <path d="M0,60 C100,20 200,100 300,50 C350,25 380,70 400,60 L400,120 L0,120 Z" fill="#3B82F6" />
+    <path d="M0,80 C80,40 180,110 280,70 C340,45 370,85 400,75 L400,120 L0,120 Z" fill="#8B5CF6" opacity="0.6" />
+  </svg>
+);
+
+export default function AfaqITApp() {
+  const [activeTab, setActiveTab] = useState("home");
+  const [activeCategory, setActiveCategory] = useState("video");
+  const [selectedTool, setSelectedTool] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [animateIn, setAnimateIn] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    setAnimateIn(false);
+    const t = setTimeout(() => setAnimateIn(true), 50);
+    return () => clearTimeout(t);
+  }, [activeTab]);
+
+  const allTools = Object.values(TOOLS).flat();
+  const filtered = searchQuery
+    ? allTools.filter(t =>
+        t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.desc.toLowerCase().includes(searchQuery.toLowerCase()))
+    : TOOLS[activeCategory] || [];
+
+  const simulateUpload = () => {
+    setIsUploading(true);
+    setUploadProgress(0);
+    let p = 0;
+    const iv = setInterval(() => {
+      p += Math.random() * 18;
+      if (p >= 100) { p = 100; clearInterval(iv); setIsUploading(false); }
+      setUploadProgress(Math.floor(p));
+    }, 200);
+  };
+
+  const navItems = [
+    { id: "home", label: "Home", icon: "⊞" },
+    { id: "tools", label: "Tools", icon: "🧰" },
+    { id: "dubbing", label: "Studio", icon: "🎬" },
+    { id: "profile", label: "Profile", icon: "👤" },
+  ];
+
+  // Styles
+  const s = {
+    app: {
+      width: "100%",
+      maxWidth: 430,
+      minHeight: "100vh",
+      margin: "0 auto",
+      background: "#080E1A",
+      fontFamily: "'Segoe UI', system-ui, sans-serif",
+      color: "#F1F5F9",
+      position: "relative",
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+    },
+    // Gradient orbs in background
+    orb1: {
+      position: "absolute", top: -80, right: -80, width: 260, height: 260,
+      borderRadius: "50%", background: "radial-gradient(circle, #1D4ED820 0%, transparent 70%)",
+      pointerEvents: "none",
+    },
+    orb2: {
+      position: "absolute", top: 300, left: -100, width: 300, height: 300,
+      borderRadius: "50%", background: "radial-gradient(circle, #7C3AED15 0%, transparent 70%)",
+      pointerEvents: "none",
+    },
+    header: {
+      padding: "52px 20px 16px",
+      background: "linear-gradient(180deg, #0F1B2D 0%, transparent 100%)",
+      position: "relative",
+      zIndex: 10,
+    },
+    logoRow: {
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+    },
+    logoLeft: { display: "flex", alignItems: "center", gap: 12 },
+    appName: {
+      fontSize: 22, fontWeight: 800, letterSpacing: 1,
+      background: "linear-gradient(135deg, #60A5FA, #A78BFA)",
+      WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+    },
+    appSub: { fontSize: 10, color: "#64748B", letterSpacing: 2, textTransform: "uppercase", marginTop: 1 },
+    menuBtn: {
+      width: 40, height: 40, borderRadius: 12,
+      background: "#0F1B2D", border: "1px solid #1E3A5F",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      cursor: "pointer", color: "#60A5FA", fontSize: 18,
+    },
+    content: {
+      flex: 1, padding: "0 0 90px 0", overflowY: "auto",
+      opacity: animateIn ? 1 : 0,
+      transform: animateIn ? "translateY(0)" : "translateY(14px)",
+      transition: "all 0.35s cubic-bezier(0.4,0,0.2,1)",
+    },
+    section: { padding: "0 20px", marginBottom: 28 },
+    sectionTitle: {
+      fontSize: 13, fontWeight: 700, letterSpacing: 1.5,
+      color: "#94A3B8", textTransform: "uppercase", marginBottom: 14,
+    },
+    // Stats grid
+    statsGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
+    statCard: {
+      background: "linear-gradient(135deg, #0F1B2D, #1a2744)",
+      border: "1px solid #1E3A5F",
+      borderRadius: 16, padding: "16px 14px",
+      position: "relative", overflow: "hidden",
+    },
+    statIcon: { fontSize: 22, marginBottom: 6 },
+    statValue: {
+      fontSize: 26, fontWeight: 800, color: "#F1F5F9",
+      background: "linear-gradient(135deg, #60A5FA, #A78BFA)",
+      WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+    },
+    statLabel: { fontSize: 11, color: "#64748B", marginTop: 2 },
+    // Hero card
+    heroCard: {
+      background: "linear-gradient(135deg, #1D4ED8 0%, #7C3AED 100%)",
+      borderRadius: 20, padding: "24px 20px", marginBottom: 24,
+      position: "relative", overflow: "hidden",
+    },
+    heroTitle: { fontSize: 20, fontWeight: 800, color: "#fff", marginBottom: 6 },
+    heroSub: { fontSize: 12, color: "#BFDBFE", lineHeight: 1.5 },
+    heroBtn: {
+      marginTop: 16, background: "rgba(255,255,255,0.18)",
+      border: "1px solid rgba(255,255,255,0.3)", borderRadius: 10,
+      padding: "10px 20px", color: "#fff", fontWeight: 700, fontSize: 13,
+      cursor: "pointer", backdropFilter: "blur(8px)", display: "inline-block",
+    },
+    // Category tabs
+    catScroll: {
+      display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4,
+      scrollbarWidth: "none",
+    },
+    catTab: (active) => ({
+      flexShrink: 0, padding: "8px 16px",
+      borderRadius: 20, fontSize: 12, fontWeight: 600,
+      cursor: "pointer", whiteSpace: "nowrap",
+      background: active ? "linear-gradient(135deg, #1D4ED8, #7C3AED)" : "#0F1B2D",
+      color: active ? "#fff" : "#64748B",
+      border: active ? "1px solid transparent" : "1px solid #1E3A5F",
+      transition: "all 0.2s",
+    }),
+    // Tool grid
+    toolGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
+    toolCard: (color) => ({
+      background: "#0F1B2D",
+      border: `1px solid ${color}28`,
+      borderRadius: 16, padding: "16px 14px",
+      cursor: "pointer", position: "relative", overflow: "hidden",
+      transition: "all 0.2s",
+    }),
+    toolIconBg: (color) => ({
+      width: 40, height: 40, borderRadius: 12,
+      background: `${color}22`, display: "flex",
+      alignItems: "center", justifyContent: "center",
+      fontSize: 20, marginBottom: 10,
+      border: `1px solid ${color}40`,
+    }),
+    toolName: { fontSize: 13, fontWeight: 700, color: "#F1F5F9", marginBottom: 3 },
+    toolDesc: { fontSize: 10, color: "#64748B", lineHeight: 1.4 },
+    hotBadge: {
+      position: "absolute", top: 10, right: 10,
+      background: "linear-gradient(135deg, #F59E0B, #EF4444)",
+      borderRadius: 6, padding: "2px 6px", fontSize: 8,
+      fontWeight: 800, color: "#fff", letterSpacing: 0.5,
+    },
+    // Search
+    searchBox: {
+      background: "#0F1B2D", border: "1px solid #1E3A5F",
+      borderRadius: 14, padding: "12px 16px",
+      display: "flex", alignItems: "center", gap: 10, marginBottom: 20,
+    },
+    searchInput: {
+      flex: 1, background: "transparent", border: "none", outline: "none",
+      color: "#F1F5F9", fontSize: 14,
+    },
+    // Upload area
+    uploadArea: {
+      background: "#0A1628",
+      border: "2px dashed #1D4ED8",
+      borderRadius: 20, padding: "32px 24px",
+      textAlign: "center", cursor: "pointer",
+      transition: "all 0.3s",
+    },
+    uploadIcon: { fontSize: 48, marginBottom: 12 },
+    uploadTitle: { fontSize: 16, fontWeight: 700, color: "#F1F5F9", marginBottom: 6 },
+    uploadSub: { fontSize: 12, color: "#64748B" },
+    progressBar: {
+      width: "100%", height: 6, background: "#1E3A5F",
+      borderRadius: 3, marginTop: 16, overflow: "hidden",
+    },
+    progressFill: (p) => ({
+      height: "100%", width: `${p}%`,
+      background: "linear-gradient(90deg, #3B82F6, #8B5CF6)",
+      borderRadius: 3, transition: "width 0.2s",
+    }),
+    // Voice select
+    voiceGrid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 },
+    voiceChip: (active) => ({
+      background: active ? "linear-gradient(135deg, #1D4ED8, #7C3AED)" : "#0F1B2D",
+      border: active ? "1px solid transparent" : "1px solid #1E3A5F",
+      borderRadius: 10, padding: "8px 6px", textAlign: "center",
+      cursor: "pointer", fontSize: 10, color: active ? "#fff" : "#94A3B8",
+      fontWeight: 600, transition: "all 0.2s",
+    }),
+    // Bottom nav
+    bottomNav: {
+      position: "fixed", bottom: 0, left: "50%",
+      transform: "translateX(-50%)",
+      width: "100%", maxWidth: 430,
+      background: "linear-gradient(180deg, transparent, #080E1A 30%)",
+      padding: "8px 0 20px",
+      display: "flex", justifyContent: "space-around",
+      alignItems: "center", zIndex: 100,
+    },
+    navItem: (active) => ({
+      display: "flex", flexDirection: "column", alignItems: "center",
+      gap: 3, cursor: "pointer", padding: "6px 16px", borderRadius: 14,
+      background: active ? "#0F1B2D" : "transparent",
+      border: active ? "1px solid #1E3A5F" : "1px solid transparent",
+      transition: "all 0.2s",
+    }),
+    navIcon: (active) => ({
+      fontSize: 20,
+      filter: active ? "none" : "grayscale(1) opacity(0.5)",
+    }),
+    navLabel: (active) => ({
+      fontSize: 9, fontWeight: 700, letterSpacing: 0.5,
+      color: active ? "#60A5FA" : "#475569", textTransform: "uppercase",
+    }),
+    // Profile
+    profileCard: {
+      background: "linear-gradient(135deg, #0F1B2D, #1a2744)",
+      border: "1px solid #1E3A5F", borderRadius: 20,
+      padding: "28px 20px", textAlign: "center",
+    },
+    avatar: {
+      width: 72, height: 72, borderRadius: "50%", margin: "0 auto 12px",
+      background: "linear-gradient(135deg, #1D4ED8, #7C3AED)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: 30, border: "3px solid #1E3A5F",
+    },
+    profileName: { fontSize: 20, fontWeight: 800, color: "#F1F5F9" },
+    profileRole: { fontSize: 12, color: "#60A5FA", marginTop: 4, fontWeight: 600 },
+    menuItem: {
+      display: "flex", alignItems: "center", gap: 14,
+      padding: "14px 0", borderBottom: "1px solid #0F1B2D",
+      cursor: "pointer",
+    },
+    menuItemIcon: {
+      width: 38, height: 38, borderRadius: 12,
+      background: "#0F1B2D", border: "1px solid #1E3A5F",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: 17,
+    },
+    menuItemText: { flex: 1, fontSize: 14, fontWeight: 600, color: "#E2E8F0" },
+    menuItemArrow: { color: "#334155", fontSize: 16 },
+    // Language grid
+    langGrid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 },
+    langChip: (active) => ({
+      background: active ? "linear-gradient(135deg, #1D4ED8, #7C3AED)" : "#0F1B2D",
+      border: active ? "1px solid transparent" : "1px solid #1E3A5F",
+      borderRadius: 10, padding: "10px 6px", textAlign: "center",
+      cursor: "pointer", fontSize: 11, color: active ? "#fff" : "#94A3B8",
+      fontWeight: 600, transition: "all 0.2s",
+    }),
+  };
+
+  const [selectedLang, setSelectedLang] = useState("English");
+  const [selectedVoice, setSelectedVoice] = useState("Trustworthy Male");
+  const languages = ["English", "Spanish", "French", "German", "Korean", "Chinese", "Arabic", "Hindi", "Italian", "Russian", "Portuguese", "Japanese"];
+  const voices = ["Trustworthy Male", "Calm Woman", "Deep Voice Man", "Whispering Girl", "Playful Girl", "Movie Trailer"];
+
+  const renderHome = () => (
+    <div>
+      <div style={s.section}>
+        <div style={s.heroCard}>
+          <WaveBackground />
+          <div style={{ position: "relative", zIndex: 2 }}>
+            <div style={{ fontSize: 11, color: "#BFDBFE", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, fontWeight: 700 }}>
+              ⚡ AI-POWERED STUDIO
+            </div>
+            <div style={s.heroTitle}>Transform Your Content with AI Dubbing</div>
+            <div style={s.heroSub}>20+ languages • 100+ voices • No sign-up needed</div>
+            <div style={s.heroBtn} onClick={() => setActiveTab("dubbing")}>
+              🎬 Start Dubbing →
+            </div>
+          </div>
+        </div>
+
+        <div style={s.sectionTitle}>📊 Platform Overview</div>
+        <div style={s.statsGrid}>
+          {STATS.map((st, i) => (
+            <div key={i} style={s.statCard}>
+              <div style={s.statIcon}>{st.icon}</div>
+              <div style={s.statValue}>{st.value}</div>
+              <div style={{ fontSize: 12, color: "#E2E8F0", fontWeight: 700 }}>{st.label}</div>
+              <div style={s.statLabel}>{st.sub}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={s.section}>
+        <div style={s.sectionTitle}>🔥 Featured Tools</div>
+        <div style={s.toolGrid}>
+          {allTools.filter(t => t.hot).map(tool => (
+            <div key={tool.id} style={s.toolCard(tool.color)} onClick={() => { setSelectedTool(tool); setActiveTab("dubbing"); }}>
+              <div style={s.hotBadge}>HOT</div>
+              <div style={s.toolIconBg(tool.color)}>{tool.icon}</div>
+              <div style={s.toolName}>{tool.name}</div>
+              <div style={s.toolDesc}>{tool.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={s.section}>
+        <div style={s.sectionTitle}>🌐 Quick Language Access</div>
+        <div style={s.langGrid}>
+          {["🇺🇸 English","🇪🇸 Spanish","🇫🇷 French","🇩🇪 German","🇯🇵 Japanese","🇰🇷 Korean","🇨🇳 Chinese","🇸🇦 Arabic","🇮🇳 Hindi"].map((l,i) => (
+            <div key={i} style={s.langChip(selectedLang === l.split(" ")[1])} onClick={() => setSelectedLang(l.split(" ")[1])}>
+              {l}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderTools = () => (
+    <div>
+      <div style={{ padding: "0 20px", marginBottom: 20 }}>
+        <div style={s.searchBox}>
+          <span style={{ color: "#64748B" }}>🔍</span>
+          <input style={s.searchInput} placeholder="Search tools..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+          {searchQuery && <span style={{ color: "#64748B", cursor: "pointer" }} onClick={() => setSearchQuery("")}>✕</span>}
+        </div>
+
+        {!searchQuery && (
+          <div style={s.catScroll}>
+            {CATEGORIES.map(cat => (
+              <div key={cat.key} style={s.catTab(activeCategory === cat.key)} onClick={() => setActiveCategory(cat.key)}>
+                {cat.icon} {cat.label}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ ...s.section, marginTop: 0 }}>
+        {searchQuery && <div style={{ ...s.sectionTitle, marginBottom: 16 }}>Results for "{searchQuery}"</div>}
+        <div style={s.toolGrid}>
+          {filtered.map(tool => (
+            <div key={tool.id} style={s.toolCard(tool.color)} onClick={() => { setSelectedTool(tool); setActiveTab("dubbing"); }}>
+              {tool.hot && <div style={s.hotBadge}>HOT</div>}
+              <div style={s.toolIconBg(tool.color)}>{tool.icon}</div>
+              <div style={s.toolName}>{tool.name}</div>
+              <div style={s.toolDesc}>{tool.desc}</div>
+            </div>
+          ))}
+        </div>
+        {filtered.length === 0 && (
+          <div style={{ textAlign: "center", padding: "40px 0", color: "#475569" }}>
+            <div style={{ fontSize: 40 }}>🔍</div>
+            <div style={{ marginTop: 10 }}>No tools found for "{searchQuery}"</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderDubbing = () => (
+    <div>
+      <div style={s.section}>
+        {selectedTool && (
+          <div style={{ ...s.heroCard, padding: "16px 20px", marginBottom: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ fontSize: 32 }}>{selectedTool.icon}</div>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>{selectedTool.name}</div>
+                <div style={{ fontSize: 11, color: "#BFDBFE" }}>{selectedTool.desc}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div style={s.sectionTitle}>📤 Upload Media</div>
+        <div style={s.uploadArea} onClick={!isUploading ? simulateUpload : undefined}>
+          {isUploading ? (
+            <div>
+              <div style={{ fontSize: 36 }}>⚙️</div>
+              <div style={{ fontSize: 14, fontWeight: 700, marginTop: 8, color: "#60A5FA" }}>Processing... {uploadProgress}%</div>
+              <div style={s.progressBar}><div style={s.progressFill(uploadProgress)} /></div>
+            </div>
+          ) : uploadProgress === 100 ? (
+            <div>
+              <div style={{ fontSize: 40 }}>✅</div>
+              <div style={{ fontSize: 14, fontWeight: 700, marginTop: 8, color: "#22C55E" }}>File Ready!</div>
+              <div style={{ fontSize: 11, color: "#64748B", marginTop: 4 }}>Tap to upload another</div>
+            </div>
+          ) : (
+            <div>
+              <div style={s.uploadIcon}>☁️</div>
+              <div style={s.uploadTitle}>Upload Video or Audio</div>
+              <div style={s.uploadSub}>MP4, MOV, AVI, MP3, WAV • Max 60MB • 10 mins</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div style={s.section}>
+        <div style={s.sectionTitle}>🌐 Target Language</div>
+        <div style={s.langGrid}>
+          {languages.map(l => (
+            <div key={l} style={s.langChip(selectedLang === l)} onClick={() => setSelectedLang(l)}>
+              {l}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={s.section}>
+        <div style={s.sectionTitle}>🎙️ Select Voice</div>
+        <div style={s.voiceGrid}>
+          {voices.map(v => (
+            <div key={v} style={s.voiceChip(selectedVoice === v)} onClick={() => setSelectedVoice(v)}>
+              {v}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={s.section}>
+        <div style={{ display: "flex", gap: 10 }}>
+          <div style={{
+            flex: 1, padding: "14px 0", borderRadius: 14,
+            background: "#0F1B2D", border: "1px solid #1E3A5F",
+            textAlign: "center", cursor: "pointer",
+            fontSize: 13, color: "#94A3B8", fontWeight: 700,
+          }}>
+            📝 Add Subtitles
+          </div>
+          <div style={{
+            flex: 2, padding: "14px 0", borderRadius: 14,
+            background: "linear-gradient(135deg, #1D4ED8, #7C3AED)",
+            textAlign: "center", cursor: "pointer",
+            fontSize: 14, color: "#fff", fontWeight: 800,
+            boxShadow: "0 4px 24px #1D4ED850",
+          }}>
+            ⚡ Generate Now
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderProfile = () => (
+    <div>
+      <div style={s.section}>
+        <div style={s.profileCard}>
+          <div style={s.avatar}>👤</div>
+          <div style={s.profileName}>AFAQ IT User</div>
+          <div style={s.profileRole}>⚡ Group of Development</div>
+          <div style={{
+            display: "inline-block", marginTop: 14,
+            background: "linear-gradient(135deg, #059669, #10B981)",
+            borderRadius: 20, padding: "6px 16px",
+            fontSize: 11, color: "#fff", fontWeight: 800,
+          }}>
+            ✅ FREE PLAN — No Sign-Up
+          </div>
+        </div>
+      </div>
+
+      <div style={s.section}>
+        <div style={s.sectionTitle}>⚙️ Settings</div>
+        {[
+          { icon: "🌐", label: "Language Preferences", sub: "English" },
+          { icon: "🔔", label: "Notifications", sub: "Enabled" },
+          { icon: "🎨", label: "App Theme", sub: "Dark Mode" },
+          { icon: "📥", label: "Download Quality", sub: "High (48kHz)" },
+          { icon: "🔒", label: "Privacy & Security", sub: "Protected" },
+          { icon: "ℹ️", label: "About AFAQ IT", sub: "v1.0.0" },
+        ].map((item, i) => (
+          <div key={i} style={s.menuItem}>
+            <div style={s.menuItemIcon}>{item.icon}</div>
+            <div>
+              <div style={s.menuItemText}>{item.label}</div>
+              <div style={{ fontSize: 11, color: "#475569" }}>{item.sub}</div>
+            </div>
+            <div style={s.menuItemArrow}>›</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={s.section}>
+        <div style={{
+          background: "linear-gradient(135deg, #0F1B2D, #1a2744)",
+          border: "1px solid #1E3A5F", borderRadius: 16,
+          padding: "18px 16px", textAlign: "center",
+        }}>
+          <div style={{ fontSize: 13, color: "#64748B", marginBottom: 6 }}>Powered by</div>
+          <div style={{
+            fontSize: 18, fontWeight: 800,
+            background: "linear-gradient(135deg, #60A5FA, #A78BFA)",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+          }}>AFAQ IT</div>
+          <div style={{ fontSize: 10, color: "#475569", marginTop: 2, letterSpacing: 2, textTransform: "uppercase" }}>
+            Group of Development
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={s.app}>
+      <div style={s.orb1} />
+      <div style={s.orb2} />
+
+      {/* Header */}
+      <div style={s.header}>
+        <div style={s.logoRow}>
+          <div style={s.logoLeft}>
+            <MountainLogo />
+            <div>
+              <div style={s.appName}>AFAQ IT</div>
+              <div style={s.appSub}>Group of Development</div>
+            </div>
+          </div>
+          <div style={s.menuBtn} onClick={() => setSidebarOpen(!sidebarOpen)}>
+            {sidebarOpen ? "✕" : "☰"}
+          </div>
+        </div>
+      </div>
+
+      {/* Page Title */}
+      <div style={{ padding: "0 20px 12px", position: "relative", zIndex: 5 }}>
+        {activeTab === "home" && <div style={{ fontSize: 24, fontWeight: 800, color: "#F1F5F9" }}>Dashboard <span style={{ fontSize: 20 }}>👋</span></div>}
+        {activeTab === "tools" && <div style={{ fontSize: 24, fontWeight: 800, color: "#F1F5F9" }}>All Tools 🧰</div>}
+        {activeTab === "dubbing" && <div style={{ fontSize: 24, fontWeight: 800, color: "#F1F5F9" }}>AI Studio 🎬</div>}
+        {activeTab === "profile" && <div style={{ fontSize: 24, fontWeight: 800, color: "#F1F5F9" }}>Profile 👤</div>}
+      </div>
+
+      {/* Main Content */}
+      <div style={s.content}>
+        {activeTab === "home" && renderHome()}
+        {activeTab === "tools" && renderTools()}
+        {activeTab === "dubbing" && renderDubbing()}
+        {activeTab === "profile" && renderProfile()}
+      </div>
+
+      {/* Bottom Navigation */}
+      <div style={s.bottomNav}>
+        {navItems.map(item => (
+          <div key={item.id} style={s.navItem(activeTab === item.id)} onClick={() => setActiveTab(item.id)}>
+            <div style={s.navIcon(activeTab === item.id)}>{item.icon}</div>
+            <div style={s.navLabel(activeTab === item.id)}>{item.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
